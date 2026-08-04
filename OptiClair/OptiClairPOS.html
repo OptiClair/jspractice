@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>OptiClair Billing System v3.0</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <link rel="stylesheet" href="OptiClairPOS.css">
+</head>
+
+<body>
+  <div class="app-container">
+    <header class="header">
+      <div class="header-left">
+        <img src="OC/OC.jpg" alt="OptiClair Logo" class="header-logo">
+        <div>
+          <div class="header-title">OptiClair POS · Billing</div>
+          <div class="header-subtitle">
+            Shyam Talkies Road, Infront of Budha Para Park, Budhapar, Raipur (C.G.) · Mob/WhatsApp: 9981463336
+          </div>
+        </div>
+      </div>
+
+      <nav class="dropdown">
+        <ul class="menu">
+          <li><i class="fa-solid fa-house icon"></i><a href="OptiClairPOS.html">Home</a></li>
+          <li><i class="fa-solid fa-cart-flatbed icon"></i>Inventory</li>
+          <li><i class="fa-brands fa-product-hunt icon"></i>Product</li>
+          <li><i class="fa-solid fa-universal-access icon"></i>Sale</li>
+          <li><i class="fa-solid fa-flag icon"></i>Report</li>
+          <li><i class="fa-solid fa-basket-shopping icon"></i>Purchase</li>
+          <li><i class="fa-solid fa-prescription icon"></i>Prescription</li>
+          <li><i class="fa-solid fa-clock icon"></i>In-Process</li>
+          <li><i class="fa-solid fa-globe"></i>Web & App-Order</li>
+        </ul>
+      </nav>
+
+      <div class="badge">Local Mode</div>
+    </header>
+
+    <div class="layout">
+      <!-- LEFT: INVOICE FORM -->
+      <section>
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">New Invoice</div>
+              <div class="card-subtitle">Patient details & order</div>
+            </div>
+            <div class="muted" id="invoiceNumberDisplay">Invoice: (auto)</div>
+          </div>
+
+          <!-- Patient & Invoice Info -->
+          <div class="row-3" style="margin-bottom: 10px;">
+            <div>
+              <label for="customerName">Customer / Patient Name *</label>
+              <input type="text" id="customerName" placeholder="e.g. Rahul Verma">
+            </div>
+            <div>
+              <label for="mobile">Mobile</label>
+              <input type="tel" id="mobile" placeholder="9876543210">
+            </div>
+            <div>
+              <label for="invoiceDate">Invoice Date</label>
+              <input type="date" id="invoiceDate">
+            </div>
+          </div>
+
+          <div class="row-3" style="margin-bottom: 12px;">
+            <div>
+              <label for="paymentMode">Payment Mode</label>
+              <select id="paymentMode">
+                <option value="Cash">Cash</option>
+                <option value="UPI">UPI</option>
+                <option value="Card">Card</option>
+                <option value="Credit">Credit</option>
+                <option value="Mix-Payment">Mix-Payment</option>
+              </select>
+            </div>
+            <div>
+              <label for="paymentRef">Payment Reference</label>
+              <input type="text" id="paymentRef" placeholder="Enter Payment Ref Number / UPI Txn">
+            </div>
+            <div>
+              <label for="rxInfo">Hospital / Rx No. / Dr. Name</label>
+              <input type="text" id="rxInfo" placeholder="Prescription / Job Ref">
+            </div>
+            <div>
+              <label for="notes">Short Note</label>
+              <input type="text" id="notes" placeholder="Blue cut lens, 1-year warranty">
+            </div>
+            <div>
+              <label for="salesId">Sales Id</label>
+              <select id="salesId">
+                <option value="">Select</option>
+                <option value="Optom-Tukeshwar Sahu">Optom-Tukeshwar Sahu</option>
+                <option value="Optom-Phool Chandra Pal">Optom-Phool Chandra Pal</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Delivery Options -->
+          <div class="card inner-card">
+            <div class="card-header inner-card-header">
+              <div class="card-title small-title">Delivery Options</div>
+              <div class="card-subtitle">Customer Shipping / Store Pickup</div>
+            </div>
+
+            <div class="row-3">
+              <div>
+                <label for="deliveryType">Delivery Type</label>
+                <select id="deliveryType">
+                  <option value="Store Pickup">Store Pickup</option>
+                  <option value="Customer Shipping">Customer Shipping</option>
+                </select>
+              </div>
+
+              <div>
+                <label for="shippingCharge">Shipping Charge (₹)</label>
+                <input type="number" id="shippingCharge" value="0" min="0">
+              </div>
+
+              <div>
+                <label for="deliveryStatus">Delivery Status</label>
+                <select id="deliveryStatus">
+                  <option value="Pending">Pending</option>
+                  <option value="In-Process">In-Process</option>
+                  <option value="Delivered">Delivered</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Shipping Address -->
+            <div id="shippingAddressSection" style="display:none; margin-top:10px;">
+              <div class="row-3">
+                <div>
+                  <label for="shipAddress">Address</label>
+                  <input type="text" id="shipAddress" placeholder="House no, street, area">
+                </div>
+                <div>
+                  <label for="shipCity">City</label>
+                  <input type="text" id="shipCity" placeholder="Raipur">
+                </div>
+                <div>
+                  <label for="shipPincode">Pincode</label>
+                  <input type="text" id="shipPincode" placeholder="492001">
+                </div>
+                <div>
+                  <label for="shipLandmark">Landmark</label>
+                  <input type="text" id="shipLandmark" placeholder="Near Budha Para Park">
+                </div>
+                <div>
+                  <label for="shipContactPerson">Contact Person</label>
+                  <input type="text" id="shipContactPerson" placeholder="Customer name">
+                </div>
+                <div>
+                  <label for="shipAltMobile">Alt Mobile</label>
+                  <input type="tel" id="shipAltMobile" placeholder="Optional">
+                </div>
+              </div>
+            </div>
+
+            <!-- Store Pickup -->
+            <div id="storePickupSection" style="display:block; margin-top:10px;">
+              <div class="row-3">
+                <div>
+                  <label for="pickupStore">Pickup Store</label>
+                  <select id="pickupStore">
+                    <option value="OptiClair - Main">OptiClair - Main</option>
+                    <option value="OptiClair - Branch 2">OptiClair - Branch 2</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="pickupDate">Pickup Date</label>
+                  <input type="date" id="pickupDate">
+                </div>
+                <div>
+                  <label for="pickupTime">Pickup Time</label>
+                  <input type="time" id="pickupTime">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Prescription -->
+          <div class="card inner-card">
+            <div class="card-header inner-card-header">
+              <div class="card-title small-title">Prescription (Power & Vision)</div>
+              <div class="card-subtitle">SPH · CYL · AXIS · PD · ADD · VN</div>
+            </div>
+            <table class="rx-table">
+              <thead>
+                <tr>
+                  <th>Eye</th>
+                  <th>SPH</th>
+                  <th>CYL</th>
+                  <th>AXIS</th>
+                  <th>PD</th>
+                  <th>ADD</th>
+                  <th>VN</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="rx-eye">Right (OD)</td>
+                  <td><input id="odSph"></td>
+                  <td><input id="odCyl"></td>
+                  <td><input id="odAxis"></td>
+                  <td><input id="odPd"></td>
+                  <td><input id="odAdd"></td>
+                  <td><input id="odVn"></td>
+                </tr>
+                <tr>
+                  <td class="rx-eye">Left (OS)</td>
+                  <td><input id="osSph"></td>
+                  <td><input id="osCyl"></td>
+                  <td><input id="osAxis"></td>
+                  <td><input id="osPd"></td>
+                  <td><input id="osAdd"></td>
+                  <td><input id="osVn"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Product Codes & Pricing -->
+          <div class="card inner-card">
+            <div class="card-header inner-card-header">
+              <div class="card-title small-title">Product Codes & Auto Pricing</div>
+              <div class="card-subtitle">Frame / Lens / Coating code → auto price</div>
+            </div>
+
+            <div class="row-3">
+              <div>
+                <label for="frameCode">Frame Code</label>
+                <input id="frameCode" placeholder="FRM101">
+              </div>
+              <div>
+                <label for="lensCode">Lens Code</label>
+                <input id="lensCode" placeholder="LNS201">
+              </div>
+              <div>
+                <label for="coatingCode">Coating Code</label>
+                <input id="coatingCode" placeholder="COT301">
+              </div>
+            </div>
+
+            <div class="row-3" style="margin-top: 8px;">
+              <div>
+                <label for="framePrice">Frame Price (₹)</label>
+                <input type="number" id="framePrice" value="0">
+              </div>
+              <div>
+                <label for="lensPrice">Lens Price (₹)</label>
+                <input type="number" id="lensPrice" value="0">
+              </div>
+              <div>
+                <label for="coatingPrice">Coating Price (₹)</label>
+                <input type="number" id="coatingPrice" value="0">
+              </div>
+            </div>
+          </div>
+
+          <!-- Additional Items -->
+          <div class="card inner-card">
+            <div class="card-header inner-card-header">
+              <div class="card-title small-title">Additional Items</div>
+              <div class="card-subtitle">Solutions · Case · Repairs · Add-ons</div>
+            </div>
+
+            <div class="items-header">
+              <div>Item</div>
+              <div class="text-right">Qty</div>
+              <div class="text-right">Rate</div>
+              <div class="text-right">Amount</div>
+              <div></div>
+            </div>
+            <div id="itemsContainer"></div>
+            <button id="addItemBtn" class="add-item-btn">+ Add Item</button>
+          </div>
+
+          <!-- Totals -->
+          <div class="totals-grid">
+            <div>
+              <label for="longNotes">Detailed Notes</label>
+              <textarea id="longNotes"></textarea>
+            </div>
+            <div>
+              <table class="totals-table">
+                <tr>
+                  <td>Sub Total</td>
+                  <td class="totals-amount" id="subTotalDisplay">0.00</td>
+                </tr>
+                <tr>
+                  <td>Discount</td>
+                  <td><input id="discount" type="number" value="0"></td>
+                </tr>
+                <tr>
+                  <td>Tax (%)</td>
+                  <td><input id="taxRate" type="number" value="0" placeholder="e.g. 18"></td>
+                </tr>
+                <tr>
+                  <td>Tax Amount</td>
+                  <td class="totals-amount" id="taxAmountDisplay">0.00</td>
+                </tr>
+                <tr>
+                  <td>Grand Total</td>
+                  <td class="totals-amount grand-total" id="grandTotalDisplay">0.00</td>
+                </tr>
+                <tr>
+                  <td>Paid</td>
+                  <td><input id="paidAmount" type="number" value="0"></td>
+                </tr>
+                <tr>
+                  <td>Balance</td>
+                  <td class="totals-amount" id="balanceDisplay">0.00</td>
+                </tr>
+              </table>
+            </div>
+          </div>
+
+          <div class="footer-actions">
+            <div class="muted">
+              Data saved in this browser only.
+              <br>Backup export ka use karein.
+            </div>
+            <div class="footer-buttons">
+              <button id="resetFormBtn" class="btn-secondary">Reset</button>
+              <button id="saveInvoiceBtn" class="btn-primary">Save</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT: HISTORY -->
+      <aside>
+        <div class="card">
+          <div class="history-header">
+            <div>
+              <div class="card-title">Invoice History</div>
+              <div class="card-subtitle">All saved bills</div>
+            </div>
+            <input id="searchInput" class="search-input" placeholder="Search name / mobile / invoice #">
+          </div>
+
+          <div class="history-actions">
+            <button id="exportBtn" class="btn-secondary">Export Backup</button>
+            <button id="clearAllBtn" class="btn-danger">Clear All</button>
+          </div>
+
+          <div class="history-table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Invoice #</th>
+                  <th>Name</th>
+                  <th>Mobile</th>
+                  <th class="text-right">Total</th>
+                  <th class="text-right">Paid</th>
+                  <th class="text-right">Balance</th>
+                  <th>Mode</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="historyTableBody"></tbody>
+            </table>
+          </div>
+
+          <div id="historyInfo" class="muted">0 invoices saved.</div>
+        </div>
+
+        <div id="viewPanel" class="card" style="display:none;">
+          <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;">
+            <img src="logo.png" alt="logo"
+              style="height:40px;width:auto;border-radius:6px;background:#f9fafb;padding:2px;">
+            <div>
+              <div style="font-weight:700;font-size:13px;">OptiClair</div>
+              <div style="font-size:11px;color:#6b7280;">
+                Shyam Talkies Road, Infront of Budha Para Park, Budhapar, Raipur (C.G.)
+              </div>
+              <div style="font-size:11px;color:#6b7280;">
+                Mob/WhatsApp: 9981463336 · Email: Helloopticlair@gmail.com
+              </div>
+            </div>
+          </div>
+          <hr style="margin:6px 0;">
+          <div id="viewContent" style="font-size:12px;color:#374151;"></div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <script src="OptiClairPOS.js"></script>
+</body>
+
+</html>
