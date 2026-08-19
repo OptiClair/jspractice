@@ -1,5 +1,15 @@
 // ------- ADMIN AUTH (PIN PROTECTION FOR DELETE) -------
 const ADMIN_PIN = "2468"; // Change this to your secret PIN
+const DELETE_OTP_EXPIRY_MS = 5 * 60 * 1000;
+const DISCOUNT_CODES = {
+  WELCOME10: { type: "percent", value: 10 },
+  SAVE100: { type: "flat", value: 100 }
+};
+let deleteOtp = null;
+let deleteOtpExpiresAt = 0;
+let pendingCancellationInvoiceId = null;
+let currentViewedInvoiceId = null;
+let appliedDiscountCode = "";
 
 // ------- PRICE MAPS (edit yahan se apne codes ke hisaab se) -------
 const FRAME_PRICE = {
@@ -31,6 +41,11 @@ const mobileInput = document.getElementById("mobile");
 const invoiceDateInput = document.getElementById("invoiceDate");
 const paymentModeInput = document.getElementById("paymentMode");
 const paymentRefInput = document.getElementById("paymentRef");
+const splitPaymentSection = document.getElementById("splitPaymentSection");
+const paymentModeOneInput = document.getElementById("paymentModeOne");
+const paymentAmountOneInput = document.getElementById("paymentAmountOne");
+const paymentModeTwoInput = document.getElementById("paymentModeTwo");
+const paymentAmountTwoInput = document.getElementById("paymentAmountTwo");
 const rxInfoInput = document.getElementById("rxInfo");
 const salesIdInput = document.getElementById("salesId");
 const notesInput = document.getElementById("notes");
@@ -64,6 +79,9 @@ const taxAmountDisplay = document.getElementById("taxAmountDisplay");
 const grandTotalDisplay = document.getElementById("grandTotalDisplay");
 const balanceDisplay = document.getElementById("balanceDisplay");
 const discountInput = document.getElementById("discount");
+const discountCodeInput = document.getElementById("discountCode");
+const applyDiscountCodeBtn = document.getElementById("applyDiscountCodeBtn");
+const discountCodeMessage = document.getElementById("discountCodeMessage");
 const taxRateInput = document.getElementById("taxRate");
 const paidAmountInput = document.getElementById("paidAmount");
 const searchInput = document.getElementById("searchInput");
@@ -71,10 +89,16 @@ const historyTableBody = document.getElementById("historyTableBody");
 const historyInfo = document.getElementById("historyInfo");
 const viewPanel = document.getElementById("viewPanel");
 const viewContent = document.getElementById("viewContent");
+const otpModal = document.getElementById("otpModal");
+const otpMobileText = document.getElementById("otpMobileText");
+const deleteOtpInput = document.getElementById("deleteOtpInput");
+const verifyOtpBtn = document.getElementById("verifyOtpBtn");
+const otpCloseBtn = document.getElementById("otpCloseBtn");
 
 const addItemBtn = document.getElementById("addItemBtn");
 const saveInvoiceBtn = document.getElementById("saveInvoiceBtn");
 const resetFormBtn = document.getElementById("resetFormBtn");
+const calculateInvoiceBtn = document.getElementById("calculateInvoiceBtn");
 const exportBtn = document.getElementById("exportBtn");
 const clearAllBtn = document.getElementById("clearAllBtn");
 
@@ -120,6 +144,18 @@ function toggleDeliveryUI() {
   }
 
   recalcTotals();
+}
+
+function updateSplitPayment() {
+  const isSplitPayment = paymentModeInput.value === "Mix-Payment";
+  splitPaymentSection.style.display = isSplitPayment ? "block" : "none";
+
+  if (isSplitPayment) {
+    const splitTotal = (parseFloat(paymentAmountOneInput.value) || 0) +
+      (parseFloat(paymentAmountTwoInput.value) || 0);
+    paidAmountInput.value = splitTotal.toFixed(2);
+    recalcTotals();
+  }
 }
 
 // ------- ITEM ROW BANANA -------
@@ -224,7 +260,11 @@ function recalcTotals() {
   // Delivery charge
   total += (parseFloat(shippingChargeInput.value) || 0);
 
-  const discount = parseFloat(discountInput.value) || 0;
+  const discountRule = DISCOUNT_CODES[appliedDiscountCode];
+  const discount = discountRule
+    ? Math.min(discountRule.type === "percent" ? total * (discountRule.value / 100) : discountRule.value, total)
+    : 0;
+  discountInput.value = discount.toFixed(2);
   const taxRate = parseFloat(taxRateInput.value) || 0;
 
   const taxable = Math.max(total - discount, 0);
@@ -237,6 +277,25 @@ function recalcTotals() {
   taxAmountDisplay.textContent = taxAmt.toFixed(2);
   grandTotalDisplay.textContent = grand.toFixed(2);
   balanceDisplay.textContent = balance.toFixed(2);
+}
+
+function applyDiscountCode() {
+  const code = discountCodeInput.value.trim().toUpperCase();
+
+  if (!code) {
+    appliedDiscountCode = "";
+    discountCodeMessage.textContent = "Enter a discount code.";
+  } else if (!DISCOUNT_CODES[code]) {
+    appliedDiscountCode = "";
+    discountCodeMessage.textContent = "Invalid discount code.";
+  } else {
+    appliedDiscountCode = code;
+    discountCodeInput.value = code;
+    const rule = DISCOUNT_CODES[code];
+    discountCodeMessage.textContent = `${code} applied: ${rule.type === "percent" ? `${rule.value}% off` : `₹${rule.value} off`}.`;
+  }
+
+  recalcTotals();
 }
 
 // ------- STORAGE -------
@@ -260,19 +319,7 @@ function nextInvoiceNumber() {
 
 // ------- SAVE INVOICE -------
 function handleSaveInvoice() {
-  const name = customerNameInput.value.trim();
-  if (!name) {
-    alert("Customer name required");
-    return;
-  }
-
-  // If shipping selected, validate address basics
-  if (deliveryTypeInput.value === "Customer Shipping") {
-    if (!shipAddressInput.value.trim() || !shipCityInput.value.trim() || !shipPincodeInput.value.trim()) {
-      alert("Shipping address, city and pincode required for Customer Shipping.");
-      return;
-    }
-  }
+  const name = customerNameInput.value.trim() || "Walk-in Customer";
 
   const invoiceNumber = nextInvoiceNumber();
   invoiceNumberDisplay.textContent = "Invoice: " + invoiceNumber;
@@ -280,11 +327,16 @@ function handleSaveInvoice() {
   const invoice = {
     id: Date.now(),
     invoiceNumber,
+    status: "Active",
     date: invoiceDateInput.value,
     name,
     mobile: mobileInput.value.trim(),
     paymentMode: paymentModeInput.value,
     paymentRef: paymentRefInput.value.trim(),
+    payments: paymentModeInput.value === "Mix-Payment" ? [
+      { mode: paymentModeOneInput.value, amount: parseFloat(paymentAmountOneInput.value) || 0 },
+      { mode: paymentModeTwoInput.value, amount: parseFloat(paymentAmountTwoInput.value) || 0 }
+    ] : [],
     rxInfo: rxInfoInput.value.trim(),
     salesId: salesIdInput.value || "",
     notes: notesInput.value.trim(),
@@ -331,6 +383,7 @@ function handleSaveInvoice() {
     items: getItemList(),
     subTotal: parseFloat(subTotalDisplay.textContent) || 0,
     discount: parseFloat(discountInput.value) || 0,
+    discountCode: appliedDiscountCode,
     taxRate: parseFloat(taxRateInput.value) || 0,
     taxAmount: parseFloat(taxAmountDisplay.textContent) || 0,
     grandTotal: parseFloat(grandTotalDisplay.textContent) || 0,
@@ -338,10 +391,16 @@ function handleSaveInvoice() {
     balance: parseFloat(balanceDisplay.textContent) || 0
   };
 
-  invoices.unshift(invoice);
-  saveInvoices();
-  alert("Invoice saved: " + invoiceNumber);
-  resetForm();
+  try {
+    invoices.unshift(invoice);
+    saveInvoices();
+    alert("Invoice saved: " + invoiceNumber);
+    resetForm();
+  } catch (error) {
+    invoices = invoices.filter(savedInvoice => savedInvoice.id !== invoice.id);
+    console.error("Invoice save failed:", error);
+    alert("Unable to save the bill. Please allow browser storage and try again.");
+  }
 }
 
 // ------- RESET FORM -------
@@ -351,6 +410,14 @@ function resetForm() {
   notesInput.value = "";
   longNotesInput.value = "";
   paymentRefInput.value = "";
+  paymentModeInput.value = "Cash";
+  paymentModeOneInput.value = "Cash";
+  paymentModeTwoInput.value = "UPI";
+  paymentAmountOneInput.value = 0;
+  paymentAmountTwoInput.value = 0;
+  appliedDiscountCode = "";
+  discountCodeInput.value = "";
+  discountCodeMessage.textContent = "Codes: WELCOME10 (10%) or SAVE100 (₹100)";
   rxInfoInput.value = "";
   salesIdInput.value = "";
 
@@ -390,6 +457,7 @@ function resetForm() {
   itemsContainer.innerHTML = "";
   addItemRow();
   toggleDeliveryUI();
+  updateSplitPayment();
   recalcTotals();
 }
 
@@ -419,7 +487,9 @@ function renderHistory() {
         <td><span class="pill ${payBadgeClass}">${inv.paymentMode}</span></td>
         <td>
           <button class="btn-secondary" data-id="${inv.id}" data-action="view">View</button>
-          <button class="btn-danger" data-id="${inv.id}" data-action="delete">X</button>
+          ${inv.status === "Cancelled"
+            ? '<span class="pill pill-amber">Cancelled</span>'
+            : `<button class="btn-danger" data-id="${inv.id}" data-action="cancel">Cancel</button>`}
         </td>
       `;
 
@@ -433,8 +503,8 @@ function renderHistory() {
     const action = btn.getAttribute("data-action");
     if (action === "view") {
       btn.addEventListener("click", () => viewInvoice(id));
-    } else if (action === "delete") {
-      btn.addEventListener("click", () => deleteInvoice(id));
+    } else if (action === "cancel") {
+      btn.addEventListener("click", () => cancelInvoice(id));
     }
   });
 }
@@ -444,7 +514,14 @@ function viewInvoice(id) {
   const inv = invoices.find(i => i.id === id);
   if (!inv) return;
 
+  if (viewPanel.style.display === "block" && currentViewedInvoiceId === id) {
+    viewPanel.style.display = "none";
+    currentViewedInvoiceId = null;
+    return;
+  }
+
   viewPanel.style.display = "block";
+  currentViewedInvoiceId = id;
 
   let itemsHTML = "";
   inv.items.forEach((it, i) => {
@@ -475,8 +552,11 @@ function viewInvoice(id) {
 
   viewContent.innerHTML = `
     <strong>${inv.invoiceNumber}</strong> | ${inv.date || ""}<br>
+    <strong>Status:</strong> ${inv.status || "Active"}<br>
     <strong>${inv.name}</strong> (${inv.mobile || "-"})<br>
     Mode: ${inv.paymentMode} | Payment Ref: ${inv.paymentRef || "-"}<br>
+    <strong>Discount Code:</strong> ${inv.discountCode || "-"}<br>
+    ${inv.payments?.length ? `<strong>Split Payment:</strong> ${inv.payments.map(payment => `${payment.mode} ₹${payment.amount.toFixed(2)}`).join(" + ")}<br>` : ""}
     ${deliveryHTML}
     Rx Info: ${inv.rxInfo || "-"} | Sales: ${inv.salesId || "-"}<br><br>
 
@@ -501,20 +581,70 @@ function viewInvoice(id) {
   `;
 }
 
-// ------- DELETE (ADMIN PIN PROTECTED) -------
-function deleteInvoice(id) {
-  const pin = prompt("ENTER ADMIN PIN TO DELETE THIS INVOICE:");
+// ------- CUSTOMER OTP INVOICE CANCELLATION -------
+function requestCustomerDeleteOtp(invoice) {
+  // Replace this demo alert with an SMS/API call before using this in production.
+  deleteOtp = String(Math.floor(100000 + Math.random() * 900000));
+  deleteOtpExpiresAt = Date.now() + DELETE_OTP_EXPIRY_MS;
 
-  if (pin !== ADMIN_PIN) {
-    alert("Wrong PIN! You are NOT allowed to delete invoices.");
+  const mobile = invoice.mobile || "the customer's registered mobile number";
+  alert(`Demo OTP for ${mobile}: ${deleteOtp}\nThis OTP expires in 5 minutes.`);
+}
+
+function cancelInvoice(id) {
+  const invoice = invoices.find(i => i.id === id);
+  if (!invoice) return;
+
+  if (!invoice.mobile) {
+    alert("A customer mobile number is required to verify the delete OTP.");
     return;
   }
 
-  if (!confirm("Are you sure? This will permanently delete this invoice.")) return;
+  requestCustomerDeleteOtp(invoice);
+  pendingCancellationInvoiceId = id;
+  otpMobileText.textContent = `OTP sent to customer mobile: ${invoice.mobile}`;
+  deleteOtpInput.value = "";
+  otpModal.style.display = "flex";
+  deleteOtpInput.focus();
+}
 
-  invoices = invoices.filter(i => i.id !== id);
+function closeOtpModal() {
+  pendingCancellationInvoiceId = null;
+  otpModal.style.display = "none";
+  deleteOtpInput.value = "";
+}
+
+function verifyCancellationOtp() {
+  const invoice = invoices.find(i => i.id === pendingCancellationInvoiceId);
+  if (!invoice) {
+    closeOtpModal();
+    return;
+  }
+
+  const enteredOtp = deleteOtpInput.value.trim();
+
+  if (!enteredOtp) return;
+
+  if (Date.now() > deleteOtpExpiresAt) {
+    alert("OTP has expired. Please request a new OTP.");
+    return;
+  }
+
+  if (enteredOtp.trim() !== deleteOtp) {
+    alert("Incorrect OTP. The invoice was not cancelled.");
+    return;
+  }
+
+  if (!confirm(`OTP verified. Cancel invoice ${invoice.invoiceNumber}?\nThe invoice will remain in history as Cancelled.`)) return;
+
+  invoice.status = "Cancelled";
+  invoice.cancelledAt = new Date().toISOString();
+  deleteOtp = null;
+  deleteOtpExpiresAt = 0;
+  closeOtpModal();
   saveInvoices();
-  alert("Invoice deleted successfully.");
+  viewPanel.style.display = "none";
+  alert("Invoice cancelled successfully.");
 }
 
 // ------- EXPORT -------
@@ -523,13 +653,57 @@ function exportBackup() {
     alert("No invoices to export.");
     return;
   }
-  const blob = new Blob([JSON.stringify(invoices, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "opticlair-invoices-backup.json";
-  a.click();
-  URL.revokeObjectURL(url);
+
+  if (typeof XLSX === "undefined") {
+    alert("Excel export library could not be loaded. Please check your internet connection and try again.");
+    return;
+  }
+
+  const invoiceRows = invoices.map(inv => ({
+    "Invoice Number": inv.invoiceNumber,
+    "Status": inv.status || "Active",
+    "Cancelled At": inv.cancelledAt || "",
+    "Date": inv.date,
+    "Customer Name": inv.name,
+    "Mobile": inv.mobile,
+    "Payment Mode": inv.paymentMode,
+    "Payment Reference": inv.paymentRef,
+    "Delivery Type": inv.delivery?.type || "",
+    "Delivery Status": inv.delivery?.status || "",
+    "Frame Code": inv.frameCode,
+    "Lens Code": inv.lensCode,
+    "Coating Code": inv.coatingCode,
+    "Sub Total": inv.subTotal,
+    "Discount Code": inv.discountCode || "",
+    "Discount": inv.discount,
+    "Tax Rate (%)": inv.taxRate,
+    "Tax Amount": inv.taxAmount,
+    "Grand Total": inv.grandTotal,
+    "Paid": inv.paid,
+    "Balance": inv.balance,
+    "Notes": inv.notes,
+    "Long Notes": inv.longNotes
+  }));
+
+  const itemRows = invoices.flatMap(inv => (inv.items || []).map(item => ({
+    "Invoice Number": inv.invoiceNumber,
+    "Customer Name": inv.name,
+    "Item": item.desc,
+    "Quantity": item.qty,
+    "Rate": item.rate,
+    "Amount": item.amount
+  })));
+
+  const workbook = XLSX.utils.book_new();
+  const invoicesSheet = XLSX.utils.json_to_sheet(invoiceRows);
+  XLSX.utils.book_append_sheet(workbook, invoicesSheet, "Invoices");
+
+  if (itemRows.length > 0) {
+    const itemsSheet = XLSX.utils.json_to_sheet(itemRows);
+    XLSX.utils.book_append_sheet(workbook, itemsSheet, "Items");
+  }
+
+  XLSX.writeFile(workbook, "opticlair-invoices-backup.xlsx");
 }
 
 // ------- CLEAR ALL (ADMIN PIN PROTECTED) -------
@@ -557,6 +731,23 @@ function init() {
   pickupDateInput.value = today;
 
   addItemBtn.addEventListener("click", () => addItemRow());
+  calculateInvoiceBtn.addEventListener("click", recalcTotals);
+  applyDiscountCodeBtn.addEventListener("click", applyDiscountCode);
+  discountCodeInput.addEventListener("input", () => {
+    if (discountCodeInput.value.trim().toUpperCase() !== appliedDiscountCode) {
+      appliedDiscountCode = "";
+      discountCodeMessage.textContent = "Click Apply Code to use this discount.";
+      recalcTotals();
+    }
+  });
+  verifyOtpBtn.addEventListener("click", verifyCancellationOtp);
+  otpCloseBtn.addEventListener("click", closeOtpModal);
+  deleteOtpInput.addEventListener("input", () => {
+    deleteOtpInput.value = deleteOtpInput.value.replace(/\D/g, "").slice(0, 6);
+  });
+  deleteOtpInput.addEventListener("keydown", event => {
+    if (event.key === "Enter") verifyCancellationOtp();
+  });
   saveInvoiceBtn.addEventListener("click", handleSaveInvoice);
   resetFormBtn.addEventListener("click", resetForm);
   exportBtn.addEventListener("click", exportBackup);
@@ -564,12 +755,16 @@ function init() {
   searchInput.addEventListener("input", renderHistory);
 
   deliveryTypeInput.addEventListener("change", toggleDeliveryUI);
+  paymentModeInput.addEventListener("change", updateSplitPayment);
+  paymentAmountOneInput.addEventListener("input", updateSplitPayment);
+  paymentAmountTwoInput.addEventListener("input", updateSplitPayment);
 
   addItemRow();
   loadInvoices();
   renderHistory();
   recalcTotals();
   toggleDeliveryUI();
+  updateSplitPayment();
 }
 
 init();

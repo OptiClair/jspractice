@@ -30,13 +30,34 @@
       <nav class="dropdown">
         <ul class="menu">
           <li><i class="fa-solid fa-house icon"></i><a href="OptiClairPOS.html">Home</a></li>
-          <li><i class="fa-solid fa-cart-flatbed icon"></i>Inventory</li>
-          <li><i class="fa-brands fa-product-hunt icon"></i>Product</li>
           <li><i class="fa-solid fa-universal-access icon"></i>Sale</li>
           <li><i class="fa-solid fa-flag icon"></i>Report</li>
-          <li><i class="fa-solid fa-basket-shopping icon"></i>Purchase</li>
           <li><i class="fa-solid fa-prescription icon"></i>Prescription</li>
           <li><i class="fa-solid fa-clock icon"></i>In-Process</li>
+          <li class="inventory-menu" tabindex="0" aria-haspopup="true">
+            <i class="fa-solid fa-cart-flatbed icon"></i>Inventory
+            <ul class="inventory-submenu" aria-label="Inventory options">
+              <li>Add Inventory</li>
+              <li>Received Inventory</li>
+              <li>Audit Inventory</li>
+              <li>Transfer Inventory</li>
+              <li>Inventory History</li>
+            </ul>
+          </li>
+          <li class="product-menu" tabindex="0" aria-haspopup="true">
+            <i class="fa-brands fa-product-hunt icon"></i>Product
+            <ul class="product-submenu" aria-label="Product categories">
+              <li>Frame</li>
+              <li>Sunglasses</li>
+              <li>Lenses</li>
+              <li>Contact Lenses</li>
+              <li>Solution</li>
+              <li>Repair</li>
+              <li>Accessories</li>
+              <li>Other</li>
+            </ul>
+          </li>
+          <li><i class="fa-solid fa-basket-shopping icon"></i>Purchase</li>
           <li><i class="fa-solid fa-globe"></i>Web & App-Order</li>
         </ul>
       </nav>
@@ -102,6 +123,31 @@
                 <option value="Optom-Tukeshwar Sahu">Optom-Tukeshwar Sahu</option>
                 <option value="Optom-Phool Chandra Pal">Optom-Phool Chandra Pal</option>
               </select>
+            </div>
+          </div>
+
+          <div id="splitPaymentSection" class="card inner-card" style="display:none; margin-bottom:12px;">
+            <div class="card-header inner-card-header">
+              <div class="card-title small-title">Two-Part Payment</div>
+              <div class="card-subtitle">Example: Cash + UPI</div>
+            </div>
+            <div class="row-3">
+              <div>
+                <label for="paymentModeOne">First Payment</label>
+                <select id="paymentModeOne"><option value="Cash">Cash</option><option value="UPI">UPI</option><option value="Card">Card</option><option value="Credit">Credit</option><option value="Other">Other</option></select>
+              </div>
+              <div>
+                <label for="paymentAmountOne">First Amount (₹)</label>
+                <input id="paymentAmountOne" type="number" min="0" step="0.01" value="0">
+              </div>
+              <div>
+                <label for="paymentModeTwo">Second Payment</label>
+                <select id="paymentModeTwo"><option value="UPI">UPI</option><option value="Cash">Cash</option><option value="Card">Card</option><option value="Credit">Credit</option><option value="Other">Other</option></select>
+              </div>
+              <div>
+                <label for="paymentAmountTwo">Second Amount (₹)</label>
+                <input id="paymentAmountTwo" type="number" min="0" step="0.01" value="0">
+              </div>
             </div>
           </div>
 
@@ -172,8 +218,8 @@
                 <div>
                   <label for="pickupStore">Pickup Store</label>
                   <select id="pickupStore">
-                    <option value="OptiClair - Main">OptiClair - Main</option>
-                    <option value="OptiClair - Branch 2">OptiClair - Branch 2</option>
+                    <option value="OptiClair - Main">OptiClair - Budha Para Raipur (C.G.)</option>
+                    <option value="OptiClair - Branch 2">OptiClair - Pachpedi-Naka Raipur (C.G.)</option>
                   </select>
                 </div>
                 <div>
@@ -298,8 +344,15 @@
                   <td class="totals-amount" id="subTotalDisplay">0.00</td>
                 </tr>
                 <tr>
-                  <td>Discount</td>
-                  <td><input id="discount" type="number" value="0"></td>
+                  <td>Discount Code</td>
+                  <td>
+                    <div class="discount-code-control">
+                    <input id="discountCode" type="text" placeholder="WELCOME10" style="text-transform:uppercase;">
+                    <input id="discount" type="hidden" value="0">
+                    <button id="applyDiscountCodeBtn" type="button" class="btn-secondary">Apply</button>
+                    <div id="discountCodeMessage" class="muted discount-code-message">Codes: WELCOME10 (10%) or SAVE100 (₹100)</div>
+                    </div>
+                  </td>
                 </tr>
                 <tr>
                   <td>Tax (%)</td>
@@ -322,6 +375,9 @@
                   <td class="totals-amount" id="balanceDisplay">0.00</td>
                 </tr>
               </table>
+              <button id="calculateInvoiceBtn" type="button" class="btn-secondary" style="margin-top:10px; width:100%;">
+                Calculate Total
+              </button>
             </div>
           </div>
 
@@ -332,7 +388,7 @@
             </div>
             <div class="footer-buttons">
               <button id="resetFormBtn" class="btn-secondary">Reset</button>
-              <button id="saveInvoiceBtn" class="btn-primary">Save</button>
+              <button id="saveInvoiceBtn" type="button" class="btn-primary">Save</button>
             </div>
           </div>
         </div>
@@ -377,26 +433,28 @@
         </div>
 
         <div id="viewPanel" class="card" style="display:none;">
-          <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;">
-            <img src="logo.png" alt="logo"
-              style="height:40px;width:auto;border-radius:6px;background:#f9fafb;padding:2px;">
-            <div>
-              <div style="font-weight:700;font-size:13px;">OptiClair</div>
-              <div style="font-size:11px;color:#6b7280;">
-                Shyam Talkies Road, Infront of Budha Para Park, Budhapar, Raipur (C.G.)
-              </div>
-              <div style="font-size:11px;color:#6b7280;">
-                Mob/WhatsApp: 9981463336 · Email: Helloopticlair@gmail.com
-              </div>
-            </div>
-          </div>
-          <hr style="margin:6px 0;">
           <div id="viewContent" style="font-size:12px;color:#374151;"></div>
         </div>
       </aside>
     </div>
   </div>
 
+  <div id="otpModal" role="dialog" aria-modal="true" aria-labelledby="otpModalTitle"
+    style="display:none; position:fixed; inset:0; z-index:1000; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:16px;">
+    <div style="width:min(420px, 100%); background:#fff; border-radius:10px; padding:22px; box-shadow:0 12px 35px rgba(0,0,0,.25);">
+      <h3 id="otpModalTitle" style="margin:0 0 8px;">Verify Customer OTP</h3>
+      <p id="otpMobileText" class="muted" style="margin:0 0 14px;"></p>
+      <label for="deleteOtpInput">Enter 6-digit OTP</label>
+      <input id="deleteOtpInput" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6"
+        placeholder="Enter OTP" style="margin-top:5px; letter-spacing:5px; text-align:center; font-size:18px;">
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+        <button id="otpCloseBtn" type="button" class="btn-secondary">Back</button>
+        <button id="verifyOtpBtn" type="button" class="btn-danger">Verify & Cancel Invoice</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="OptiClairPOS.js"></script>
 </body>
 

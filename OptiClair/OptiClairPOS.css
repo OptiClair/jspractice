@@ -276,6 +276,29 @@ textarea {
   color: #4b5563;
 }
 
+.discount-code-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+  align-items: center;
+  width: 100%;
+  max-width: 100%;
+}
+
+.discount-code-control input {
+  min-width: 0;
+  width: 100%;
+}
+
+.discount-code-control .btn-secondary {
+  width: 100%;
+}
+
+.discount-code-message {
+  grid-column: 1 / -1;
+  font-size: 11px;
+}
+
 .totals-amount {
   text-align: right;
   font-weight: 600;
@@ -441,6 +464,52 @@ th {
 
 .menu li:hover {
   color: #f59e0b;
+}
+
+.product-menu,
+.inventory-menu {
+  position: relative;
+}
+
+.product-submenu,
+.inventory-submenu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 100;
+  min-width: 165px;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.2);
+}
+
+.product-menu:hover .product-submenu,
+.product-menu:focus-within .product-submenu,
+.inventory-menu:hover .inventory-submenu,
+.inventory-menu:focus-within .inventory-submenu {
+  display: block;
+}
+
+.product-submenu li,
+.inventory-submenu li {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  color: #374151;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.product-submenu li:hover,
+.inventory-submenu li:hover {
+  color: #111827;
+  background: #f3f4f6;
+  border-radius: 5px;
 }
 
 .icon {

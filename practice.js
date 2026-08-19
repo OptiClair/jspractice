@@ -426,11 +426,21 @@ obj.print();*/
 
 // filter Practice
 
-const names = [
-    {Name: "Rahul", Age: 25},
-    {Name: "Vikash", Age: 35},
-    {Name: "Golu", Age: 30},
-]
+// const names = [
+//     {Name: "Rahul", Age: 25},
+//     {Name: "Vikash", Age: 35},
+//     {Name: "Golu", Age: 30},
+// ]
 
-const nameFulls = names.filter((name) => name.Age > 30);
-console.log(nameFulls);
+// const nameFulls = names.filter((name) => name.Age > 30);
+// console.log(nameFulls);
+
+function user(name) {
+this.name = name;
+}
+const user1 = new user ("Tukeshwar Sahu")
+
+user.prototype.sayHello = function () {
+    console.log(this.name);
+}
+user1.sayHello();

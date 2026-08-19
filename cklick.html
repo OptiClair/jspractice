@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Color Switch</title>
+  <style>
+    body {
+      text-align: center;
+      margin-top: 50px;
+    }
+
+    /* .button {
+      height: 100px;
+      width: 100px;
+      border: 2px solid black;
+      
+      display: inline-block;
+      margin: 10px;
+      cursor: pointer;
+    }
+
+    .button-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+    }
+
+    #reset {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background-color: red;
+      border: 3px solid;
+    }
+
+    #btn {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background-color: rgb(2, 252, 2);
+      border: 3px solid;
+    }
+
+    #grey {
+      background: grey;
+    }
+
+    #white {
+      background: white;
+    }
+
+    #blue {
+      background: blue;
+    }
+
+    #yellow {
+      background: yellow;
+    } */
+   /* .cuntainer {
+      margin: auto;
+      width: 300px;
+      height: 300px;
+      border: 2px solid black;
+      display: inline-block;
+      justify-content: space-evenly;
+      align-items: center;
+      flex-direction: column;
+    }
+
+    .btn {
+      width: 80px;
+      height: 50px;
+      margin-top: 5rem;
+      border-color: black;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    #green {
+      background-color: green;
+      color: white;
+    }
+
+    #red {
+      background-color: red;
+      color: white;
+    }
+
+    #white {
+      background-color: white;
+      color: red;
+    }*/
+  </style>
+</head>
+
+<body>
+
+  <h1>Welcome To OptiClair</h1>
+
+  <button class="start">Start</button>
+
+  <button class="stop">Stop</button>
+  <button class="reset">Reset</button>
+
+<!-- 
+  <div class="cuntainer">
+
+    <h2>button Practice</h2>
+
+    <button class="btn" id="green">Click GRN</button>
+    <button class="btn" id="red">Click RED</button>
+    <button class="btn" id="white">Click WHT</button>
+  </div> -->
+
+  <!-- <h1>Event listing</h1>
+
+<button id="btn" class="btn">Click Me</button> -->
+
+  <!-- <h1>Color Scheme Switch</h1>
+
+  <div class="button" id="grey"></div>
+  <div class="button" id="white"></div>
+  <div class="button" id="blue"></div>
+  <div class="button" id="yellow"></div>
+
+  <div class="button-container">
+    <button id="btn">Click</button>
+    <button id="reset">Reset</button>
+  </div>
+
+  <h2>Click any color to change background</h2> -->
+
+  <script>
+    const start = document.querySelector('.start')
+    const stop = document.querySelector('.stop')
+    const reset = document.querySelector('.reset')
+    const heading = document.querySelector('h1')
+
+    start.addEventListener('click', function(){
+      setTimeout(function(){
+        heading.innerHTML = "Trusted OptiCal In Raipur"
+        heading.style.color = "blue"
+      },1000);
+    });
+
+    stop.addEventListener('click', function(){
+      setTimeout(function(){
+        heading.innerHTML = "Indias Leadin Brand"
+        heading.style.color = "green"
+      },1000);
+    });
+
+    reset.addEventListener('click', function(){
+      setTimeout(function(){
+        heading.innerHTML = "Welcome To OptiClair"
+        heading.style.color = "orange"
+      },1000);
+    })
+
+    // setTimeout(function(){
+    //   console.log("hello world");
+      
+    // },2000);
+
+    // const green = document.getElementById('green');
+    // const red = document.getElementById('red');
+    // const white = document.getElementById('white');
+    // const cuntainer = document.querySelector('.cuntainer');
+
+
+    // green.addEventListener('click', function () {
+    //   cuntainer.style.backgroundColor = "green";
+    // });
+
+    // red.addEventListener('click', function () {
+    //   cuntainer.style.backgroundColor = "red";
+    // });
+
+    // white.addEventListener('click', function () {
+    //   cuntainer.style.backgroundColor = "white";
+    // });
+
+
+
+    //   const button = document.getElementById('btn');
+
+    // button.addEventListener('click', function () {
+    //   alert('Welcome OptiClair');
+    //   });
+
+    // const buttons = document.querySelectorAll('.button');
+    // const body = document.querySelector('body');
+    // const reset = document.getElementById('reset')
+    // const btn = document.getElementById('btn')
+
+    // reset.addEventListener('click', () => {
+    //   body.style.backgroundColor = "white"
+    // })
+
+    // btn.addEventListener('click', () => {
+    //   body.style.backgroundColor = "pink"
+    // })
+
+    // buttons.forEach(function (button) {
+    //   button.addEventListener('click', function (e) {
+    //     if (e.target.id === "grey") {
+    //       body.style.backgroundColor = e.target.id;
+    //     }
+    //     if (e.target.id === "white") {
+    //       body.style.backgroundColor = e.target.id;
+    //     }
+    //     if (e.target.id === "blue") {
+    //       body.style.backgroundColor = e.target.id;
+    //     }
+    //     if (e.target.id === "yellow") {
+    //       body.style.backgroundColor = e.target.id;
+    //     }
+    //   });
+    // });
+  </script>
+
+</body>
+
+</html>
